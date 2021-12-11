@@ -151,6 +151,8 @@ def preprocessSkeletonJSON(processed_dataset_path):
   for dance in dance_dict.keys():
     os.mkdir(os.path.join(processed_dataset_path, dance))
 
+  big_array = np.zeros((20, 17, 2))
+
   # transform json files into 3D numpy arrays
   # output dimensions: (num_body_parts, coordinates, max_people) or (17, 2, 20)
   for file in files:
@@ -159,16 +161,30 @@ def preprocessSkeletonJSON(processed_dataset_path):
         # load json file
         json_file = json.load(f)
 
-        # remove unnecessary fields
+        person = -1
         for i in range(len(json_file)):
-          # remove first entry, which is a person index (e.g., `person0`)
-          json_file[i].pop(0)
-          for j in range(len(json_file[i])):
-            # remove the first entry, which is a body part label (e.g., `nose`)
-            json_file[i][j] = json_file[i][j][1]
+            person = person + 1
+            # remove first entry, which is a person index (e.g., `person0`)
+            if json_file[i]['score'] > 0.2:
+
+                for kp in range(len(json_file[i]['keypoints'])):
+                    # print(json_file[i]['keypoints'][kp]['position']['x'])
+                    big_array[person][kp][0] = json_file[i]['keypoints'][kp]['position']['x']
+                    big_array[person][kp][1] = json_file[i]['keypoints'][kp]['position']['y']
+
+        # remove unnecessary fields
+
+
+        # for i in range(len(json_file)):
+        #   # remove first entry, which is a person index (e.g., `person0`)
+        #   json_file[i].pop(0)
+        #   for j in range(len(json_file[i])):
+        #     # remove the first entry, which is a body part label (e.g., `nose`)
+        #     json_file[i][j] = json_file[i][j][1]
 
         # convert nested lists into a numpy array
-        np_file = np.asarray(json_file)
+        # np_file = np.asarray(json_file)
+        np_file = big_array
         # zero pad frames with less than 20 skeletons
         np_file_pad = pad_skeletons(json_file, np_file)
         # switch ordering of axes to dimensions: (num_body_parts, coordinates, num_people)
